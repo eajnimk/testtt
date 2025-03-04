@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+</head>
+<body>
+    <h1>junya.ishigami+associates</h1>
+
+    <form id="uploadForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" required><br><br>
+
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" required><br><br>
+
+        <label for="message">Message:</label>
+        <textarea id="message" required></textarea><br><br>
+
+        <label for="fileInput">Attach File(s) (Max 10MB):</label>
+        <input type="file" id="fileInput" multiple><br><br>
+
+        <button type="button" onclick="uploadFiles()">Submit</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+        async function uploadFiles() {
+            let name = document.getElementById("name").value.trim();
+            let email = document.getElementById("email").value.trim();
+            let subject = document.getElementById("subject").value.trim();
+            let message = document.getElementById("message").value.trim();
+            let files = document.getElementById("fileInput").files;
+
+            if (!name || !email || !subject || !message) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            if (files.length === 0) {
+                alert("Please select at least one file.");
+                return;
+            }
+
+            // 파일 크기 제한 (최대 10MB)
+            let totalSize = 0;
+            for (let file of files) {
+                totalSize += file.size;
+            }
+            if (totalSize > 10 * 1024 * 1024) {
+                alert("Total file size must be under 10MB.");
+                return;
+            }
+
+            let accessToken = "sl.u.AFkH-Khdde0iDkhFJi6qG-6LncwfKCzD_FDqs8-uN_6u5sv-MSEWRToVffEA7Cc1RbXUFY2Pe1BKxrr7ziQpRURQS_vbAceEHmMFtY63kAiY8ioL6FCSIozAW4zjPMKfgTm67ZXKMZBmW9b5V3SFVshhPeCSOOPKIs3Rzpm7BfQyF7ZN3PmblAJTd9NwsxzqnxHawJf1KJ-6MPnrTOloSq0hRyjMnagTyzU6kl1zygK3EGO7PXwQX69V-FybmP1TuS_H-vcYSsKFNoVJy0LT9LdMbtCZRqspDBUX4QU_EotuBah3xro3ymTDJtuSXtPlOZMFzg0mC0sOLa5SwrOeZc754Y9XZuLVw1tdLuwAL9qvJN1EI7zLNU0ZnxZ_Y_0jYvqbxiEdXlfQi5DxO9kStb5zNFc0ZPRLeB8SzzQ1QVFttTuPJA5etvUt-RM2-5xfOdf8S45gJlIAyYLqR65_ChL_OH5mNiGPQiCvGKVrnOE1vOGZM3n0kMRH2cdPSlnR1vkZtCrPa27f1Nn-7OcKjTlVvido1dnFxq4GJE62vfzCkTFB68pmUTzOIIcMLyGkIJCm0Rdqa-GgyRUsUHPjXOEwKuVSURSPRFWoJr158NW0yU_ymbJinDIOa8ES-wA8tZ0JGhNdx3c5X5AwK3VE2bVhBErPkdxQwlKaeJjKhKGxNcBzKOeN2fLbIFyvxAAY6LAhNmcZOPV7u5OxQoDhHdG6EF9tdVKRzPAF0hKq2lWf0yvb8mhLY4XYh9IwCp1fl8A4CZYnCb9IUavPJghuUQAvVqh41BIhg786fHSeNTD_qV52AE5_Sc30BKs1ybUrZLiGu0PEjd3pNsoUuv__fzrgW24Cd5gc9u6FpwRK0c_7nETk0u6nh_q0g7edc1RVcbpeVUKhHxB-cn4xSzYm2UIEVFLPCSC_PlCanKfKJnSOK0SjWtqPxXHb_DMkPfAzG-ZUvFjNpSGapAwswaR7cw0KrxYCbY7nD4wAmLmgKjJoHpCqg_vG04DRqPwMIWPTBVy5RH2RU2O5Jvc2XgTDoYViLln4iJNcPAc2UKnyC9f_rAZRF2zjGlJj1klRRl9qvsLrs4NHLW9nElGIzYQS9rFhelZZ1K47YI_hhphWIfk9203yyKGoIN34mQpr3ZYy-6wMYs2pkB9C_BvIo2pDO1JrfgIslvBhvBnnBw0p9SkD1sRpJl9F27az7cxi29-RIjQw38vwQyU0vhx3XxGTRXJlyBJQ3iF1t20viggpzMDlS3paK3RenEebGsi4Wk_vI-HRp8tp0aiwx7wg__6EI4Jgmz7tUzWirduxRUGK53vQ-FbPaxNRsAbS1Y04j69q_Qo";  // ★ 여기서 API 키를 입력!
+            let timestamp = new Date().toISOString().replace(/:/g, "-"); // "2025-03-04T12-34-56"
+            let folderName = `/${timestamp}_${name}_${email}`;
+
+            try {
+                // 1️⃣ Dropbox에 폴더 생성
+                let folderResponse = await fetch("https://api.dropboxapi.com/2/files/create_folder_v2", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + accessToken,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ path: folderName })
+                });
+
+                if (!folderResponse.ok) {
+                    throw new Error("Folder creation failed");
+                }
+
+                // 2️⃣ 각 파일을 폴더 안에 업로드
+                for (let file of files) {
+                    let filePath = `${folderName}/${file.name}`;
+
+                    let fileResponse = await fetch("https://content.dropboxapi.com/2/files/upload", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + accessToken,
+                            "Dropbox-API-Arg": JSON.stringify({
+                                path: filePath,
+                                mode: "add",
+                                autorename: true,
+                                mute: true
+                            }),
+                            "Content-Type": "application/octet-stream"
+                        },
+                        body: file
+                    });
+
+                    if (!fileResponse.ok) {
+                        throw new Error("File upload failed");
+                    }
+                }
+
+                document.getElementById("status").innerText = "✅ Upload Completed!";
+            } catch (error) {
+                document.getElementById("status").innerText = "❌ Upload Failed!";
+            }
+        }
+    </script>
+</body>
+</html>
